@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/huntergood/tbot/internal/repository"
-
 	"github.com/huntergood/tbot/internal/bot"
+	"github.com/huntergood/tbot/internal/repository"
+	"github.com/huntergood/tbot/pkg/parser"
 
 	"github.com/huntergood/tbot/internal/config"
 )
@@ -18,8 +18,12 @@ var (
 )
 
 func main() {
+	parser.GetHTML("http://joyreactor.cc/")
+	os.Exit(0)
 	var s *config.Special = new(config.Special)
 	URL = s.GetURL()
+
+	// если это выполняется программа завершается
 	if len(os.Args) == 2 {
 		if os.Args[1] == "-m" {
 			db := repository.Connect(s.DbNAme)
@@ -27,7 +31,7 @@ func main() {
 		}
 	}
 	botT := bot.NewBot(URL)
-	timer := time.NewTicker(time.Minute * 15)
+	timer := time.NewTicker(time.Minute * 10)
 	go task(timer.C)
 	for {
 		res := botT.GetUpdates()
@@ -40,11 +44,9 @@ func main() {
 }
 
 func task(c <-chan time.Time) {
-	for {
-		select {
-		case <-c:
-			//parse img
-			fmt.Println("Parse Img")
-		}
+	// Использовать время для добавления в БД хм
+	for range c {
+		//parse img
+		fmt.Println("Parse Img")
 	}
 }
