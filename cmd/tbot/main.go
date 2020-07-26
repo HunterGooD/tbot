@@ -1,6 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/huntergood/tbot/internal/repository"
+
 	"github.com/huntergood/tbot/internal/bot"
 
 	"github.com/huntergood/tbot/internal/config"
@@ -12,8 +18,17 @@ var (
 )
 
 func main() {
-	URL = config.GetURL()
+	var s *config.Special = new(config.Special)
+	URL = s.GetURL()
+	if len(os.Args) == 2 {
+		if os.Args[1] == "-m" {
+			db := repository.Connect(s.DbNAme)
+			repository.Migration(db)
+		}
+	}
 	botT := bot.NewBot(URL)
+	timer := time.NewTicker(time.Minute * 15)
+	go task(timer.C)
 	for {
 		res := botT.GetUpdates()
 		// BUG: 3 message loop
@@ -22,4 +37,14 @@ func main() {
 		}
 	}
 
+}
+
+func task(c <-chan time.Time) {
+	for {
+		select {
+		case <-c:
+			//parse img
+			fmt.Println("Parse Img")
+		}
+	}
 }

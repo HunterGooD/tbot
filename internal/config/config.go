@@ -6,25 +6,26 @@ import (
 	"log"
 )
 
-type special struct {
+// Special config
+type Special struct {
 	URLAPI string `json:"urlApi"`
 	Token  string `json:"token"`
+	DbNAme string `json:"dbname"`
 }
 
 // GetURL Возвращает url для общения с API
-func GetURL() string {
-	var spec = special{}
+func (s *Special) GetURL() string {
 	b, err := ioutil.ReadFile("configs/special.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := json.Unmarshal(b, &spec); err != nil {
+	if err := json.Unmarshal(b, s); err != nil {
 		log.Fatal(err)
 	}
-	return spec.concatURL()
+	return s.concatURL()
 }
 
-func (s *special) concatURL() string {
+func (s *Special) concatURL() string {
 	return s.URLAPI + "bot" + s.Token
 }

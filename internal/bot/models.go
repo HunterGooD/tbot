@@ -39,8 +39,15 @@ type ChatRT struct {
 	Type      string `json:"type"`
 }
 
-// MessageUserT ...
+// MessageUserT Отправка обычного сообщения пользователю
 type MessageUserT struct {
 	ChatID int    `json:"chat_id"`
 	Text   string `json:"text"`
+}
+
+// MessageUserPhotoT Отправка сообщения с фото
+type MessageUserPhotoT struct {
+	ChatID  int    `json:"chat_id"`
+	Photo   string `json:"photo"`
+	Caption string `json:"caption"`
 }
