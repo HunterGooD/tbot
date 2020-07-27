@@ -1,10 +1,13 @@
 package parser
 
 import (
-	"fmt"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
+
+	"github.com/huntergood/tbot/internal/bot"
 )
 
 // GetHTML получает всю страницу
@@ -17,16 +20,17 @@ func GetHTML(url string) string {
 	//  пока задается напрямую
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0")
 	client := &http.Client{}
+
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
+
 	buf, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(buf))
 	return string(buf)
 }
 
@@ -37,11 +41,16 @@ func GetHTML(url string) string {
 // tag.className тег с классом
 // tag#id тег с идентификатором
 // .className tag
-func GetObject(selector string) []string {
-	return []string{}
-}
-
-// map[string]string {"class": "nameClass", "tag": ""}
-func getSelection(selector string) map[string]string {
-	return make(map[string]string)
+func GetObject(html, reg string) []bot.JSONReact {
+	var response = make([]bot.JSONReact, 0)
+	regular := regexp.MustCompile(reg)
+	result := regular.FindAllStringSubmatch(html, -1)
+	for _, slice := range result {
+		res := &bot.JSONReact{}
+		if err := json.Unmarshal([]byte(slice[1]), res); err != nil {
+			log.Fatal(err)
+		}
+		response = append(response, res)
+	}
+	return response
 }

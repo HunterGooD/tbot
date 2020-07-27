@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/huntergood/tbot/pkg/parser"
 )
 
 // Bot структура отвечающая за бота
@@ -63,4 +65,11 @@ func (b *Bot) SendMessage(id int, str string) {
 		log.Fatal(err)
 	}
 	// Continue ...
+}
+
+// ParseReactor ///
+func (b *Bot) ParseReactor(url string) *JSONReact {
+	html := parser.GetHTML(url)
+	parser.GetObject(html, `<script\stype="application/ld\+json"[^>]*>(.+?)</script>`)
+	return nil
 }

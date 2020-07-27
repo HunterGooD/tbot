@@ -7,7 +7,6 @@ import (
 
 	"github.com/huntergood/tbot/internal/bot"
 	"github.com/huntergood/tbot/internal/repository"
-	"github.com/huntergood/tbot/pkg/parser"
 
 	"github.com/huntergood/tbot/internal/config"
 )
@@ -18,8 +17,6 @@ var (
 )
 
 func main() {
-	parser.GetHTML("http://joyreactor.cc/")
-	os.Exit(0)
 	var s *config.Special = new(config.Special)
 	URL = s.GetURL()
 

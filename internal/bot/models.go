@@ -51,3 +51,23 @@ type MessageUserPhotoT struct {
 	Photo   string `json:"photo"`
 	Caption string `json:"caption"`
 }
+
+// JSONReact для распарсенных данных Reactora
+type JSONReact struct {
+	Type       string          `json:"@type"`
+	MainEntity MainEntityReact `json:"mainEntityOfPage"`
+	HeadLine   string          `json:"headline"`
+	Image      ImageReactor    `json:"image"`
+}
+
+// MainEntityReact ..
+type MainEntityReact struct {
+	Type string `json:"@type"`
+	ID   string `json:"@id"`
+}
+
+//ImageReactor ..
+type ImageReactor struct {
+	Type string `json:"@type"`
+	URL  string `json:"url"`
+}
