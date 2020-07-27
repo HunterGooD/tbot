@@ -19,12 +19,12 @@ var (
 func main() {
 	var s *config.Special = new(config.Special)
 	URL = s.GetURL()
+	repo := repository.NewRepo()
 
 	// если это выполняется программа завершается
 	if len(os.Args) == 2 {
 		if os.Args[1] == "-m" {
-			db := repository.Connect(s.DbNAme)
-			repository.Migration(db)
+			repo.Migration()
 		}
 	}
 

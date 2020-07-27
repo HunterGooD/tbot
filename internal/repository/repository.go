@@ -9,13 +9,26 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// NewRepo ..
+func NewRepo(dbname string) *Repo {
+	return &Repo{
+		dbName: dbname,
+	}
+}
+
+// Repo ..
+type Repo struct {
+	dbconnect *sql.DB
+	dbName    string
+}
+
 // Migration для проверки созданной струтуры
-func Migration(dbconnection *sql.DB) {
+func (r *Repo) Migration() {
 	query, err := ioutil.ReadFile("internal/repository/tables.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
-	s, err := dbconnection.Prepare(string(query))
+	s, err := r.dbconnect.Prepare(string(query))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,10 +40,10 @@ func Migration(dbconnection *sql.DB) {
 }
 
 // Connect Возвращает сооединение с БД
-func Connect(dbName string) *sql.DB {
-	database, err := sql.Open("sqlite3", dbName)
+func (r *Repo) Connect() {
+	database, err := sql.Open("sqlite3", r.dbName)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return database
+	r.dbconnect = database
 }

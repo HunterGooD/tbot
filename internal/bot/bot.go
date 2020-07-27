@@ -51,8 +51,10 @@ func (b *Bot) GetUpdates() ResponseT {
 }
 
 // HandlerMessage обработчик сообщений
-func (b *Bot) HandlerMessage(resp ResponseT) {
-
+func (b *Bot) HandlerMessage(resp ResultRT, ) {
+	if resp.Message.Text == "/start" {
+		
+	}
 }
 
 // SendMessage //
