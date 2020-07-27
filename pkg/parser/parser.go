@@ -1,13 +1,10 @@
 package parser
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
-
-	"github.com/huntergood/tbot/internal/bot"
 )
 
 // GetHTML получает всю страницу
@@ -41,16 +38,13 @@ func GetHTML(url string) string {
 // tag.className тег с классом
 // tag#id тег с идентификатором
 // .className tag
-func GetObject(html, reg string) []bot.JSONReact {
-	var response = make([]bot.JSONReact, 0)
+// Пока функция принимает готовое регулярное выражение и работает с ним
+func GetObject(html, reg string) []string {
+	var response = make([]string, 0)
 	regular := regexp.MustCompile(reg)
 	result := regular.FindAllStringSubmatch(html, -1)
 	for _, slice := range result {
-		res := &bot.JSONReact{}
-		if err := json.Unmarshal([]byte(slice[1]), res); err != nil {
-			log.Fatal(err)
-		}
-		response = append(response, res)
+		response = append(response, slice[1])
 	}
 	return response
 }

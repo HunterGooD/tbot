@@ -47,9 +47,29 @@ type MessageUserT struct {
 
 // MessageUserPhotoT Отправка сообщения с фото
 type MessageUserPhotoT struct {
-	ChatID  int    `json:"chat_id"`
-	Photo   string `json:"photo"`
-	Caption string `json:"caption"`
+	ChatID       int           `json:"chat_id"`
+	Photo        string        `json:"photo"`
+	Caption      string        `json:"caption"`
+	ReplayMarkup ReplayMarkupT `json:"replay_markup"`
+}
+
+// MessageUserAnimationT Отправка сообщения с анимацией
+type MessageUserAnimationT struct {
+	ChatID       int           `json:"chat_id"`
+	Animation    string        `json:"animation"`
+	Caption      string        `json:"caption"`
+	ReplayMarkup ReplayMarkupT `json:"replay_markup"`
+}
+
+// ReplayMarkupT ..
+type ReplayMarkupT struct {
+	InlineKeyboard [][]InlineKeyboardT `json:"inline_keyboard"`
+}
+
+// InlineKeyboardT ..
+type InlineKeyboardT struct {
+	Text string `json:"text"`
+	URL  string `json:"url"`
 }
 
 // JSONReact для распарсенных данных Reactora

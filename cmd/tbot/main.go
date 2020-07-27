@@ -27,23 +27,25 @@ func main() {
 			repository.Migration(db)
 		}
 	}
+
 	botT := bot.NewBot(URL)
 	timer := time.NewTicker(time.Minute * 10)
-	go task(timer.C)
+	go updateContent(timer.C, botT)
 	for {
 		res := botT.GetUpdates()
-		// BUG: 3 message loop
 		for _, resp := range res.Result {
-			botT.SendMessage(resp.Message.From.ID, resp.Message.Text)
+			go botT.HandlerMessage(resp)
+			// botT.SendMessage(resp.Message.From.ID, resp.Message.Text)
 		}
 	}
 
 }
 
-func task(c <-chan time.Time) {
+func updateContent(c <-chan time.Time, botT *bot.Bot) {
 	// Использовать время для добавления в БД хм
 	for range c {
 		//parse img
 		fmt.Println("Parse Img")
+		botT.SendMessageReactor("http://joyreactor.cc/")
 	}
 }

@@ -1,13 +1,6 @@
 CREATE TABLE IF NOT EXISTS user (
     id INTEGER PRIMARY KEY,
-    firstName VARCHAR(40),
     username VARCHAR(50)
-);
-
-CREATE TABLE IF NOT EXISTS post (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    caption VARCHAR(255),
-    imageSrc TEXT
 );
 
 CREATE TABLE IF NOT EXISTS subscribe (
