@@ -39,6 +39,7 @@ func updateContent(c <-chan time.Time, botT *bot.Bot) {
 	for range c {
 		//parse img
 		fmt.Println("Parse Img")
-		botT.SendMessageReactor("http://joyreactor.cc/")
+		go botT.SendMessageReactor("http://reactor.cc/")
+		botT.SendMessageReactor("http://anime.reactor.cc/")
 	}
 }

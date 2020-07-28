@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/huntergood/tbot/internal/repository"
 
@@ -63,13 +65,17 @@ func (b *Bot) Migrate() {
 
 // HandlerMessage обработчик сообщений
 func (b *Bot) HandlerMessage(resp ResultRT) {
-	if resp.Message.Text == "/start" {
+	switch resp.Message.Text {
+	case "/start":
 		u := b.repo.GetUserByID(resp.Message.From.ID)
 		if u == nil {
 			b.repo.AddUser(resp.Message.From.ID, resp.Message.From.Username)
 			b.sendMessageStart(resp.Message.From.ID, resp.Message.Text)
 			return
 		}
+	case "Случайный пост":
+		b.sendRandom(resp.Message.From.ID)
+		return
 	}
 	b.SendMessage(resp.Message.From.ID, resp.Message.Text)
 }
@@ -112,12 +118,38 @@ func (b *Bot) SendMessage(id int, str string) {
 	// Continue ...
 }
 
+func (b *Bot) getStrings(url, reg string) []string {
+	html := parser.GetHTML(url)
+	return parser.GetObject(html, reg)
+}
+
+func (b *Bot) sendRandom(id int) {
+	var strs []string
+	for len(strs) == 0 {
+		strs = b.getStrings("http://reactor.cc/random", `<div\sclass="image".*?href\s*=\s*['"]([^\s'"]+)[\s'"]`)
+	}
+	for _, str := range strs {
+		var res = JSONReact{
+			Type: "Image",
+			Image: ImageReactor{
+				URL: str,
+			},
+		}
+		f := res
+		go b.sendUsers(f, []int{id})
+	}
+}
+
 // SendMessageReactor парсит и отправляет сообщения с reactor
 func (b *Bot) SendMessageReactor(url string) {
 	var idusers []int = b.repo.GetIDUsers()
-	html := parser.GetHTML(url)
-	strs := parser.GetObject(html, `<script\stype="application/ld\+json"[^>]*>(.+?)</script>`)
+	rand.Seed(time.Now().Unix())
+	page := strconv.Itoa(rand.Intn(3000) + 1)
+	strs := b.getStrings(url+page, `<script\stype="application/ld\+json"[^>]*>(.+?)</script>`)
 	for _, str := range strs {
+		if len(str) == 0 {
+			continue
+		}
 		var res = JSONReact{}
 		if err := json.Unmarshal([]byte(str), &res); err != nil {
 			log.Fatal(err)
@@ -157,7 +189,6 @@ func (b *Bot) sendMedia(res JSONReact, id int) {
 			log.Fatal(err)
 		}
 	}
-
 	if len(buff) == 0 {
 		ams := &MessageUserPhotoT{
 			ChatID:       id,
@@ -170,7 +201,6 @@ func (b *Bot) sendMedia(res JSONReact, id int) {
 			log.Fatal(err)
 		}
 	}
-
 	if _, err := http.Post(b.url+postURL, "application/json", bytes.NewBuffer(buff)); err != nil {
 		log.Fatal(err)
 	}

@@ -45,17 +45,20 @@ type MessageUserT struct {
 	Text   string `json:"text"`
 }
 
-// StartMessage
+// StartMessage юю
 type StartMessage struct {
 	ChatID   int      `json:"chat_id"`
 	Text     string   `json:"text"`
 	ReplayMT ReplayMT `json:"reply_markup"`
 }
 
+// ReplayMT ..
 type ReplayMT struct {
 	ResizeKeyboard bool          `json:"resize_keyboard"`
 	Keyboard       [][]KeyboardT `json:"keyboard"`
 }
+
+// KeyboardT ..
 type KeyboardT struct {
 	Text string `json:"text"`
 }
@@ -65,7 +68,7 @@ type MessageUserPhotoT struct {
 	ChatID       int           `json:"chat_id"`
 	Photo        string        `json:"photo"`
 	Caption      string        `json:"caption"`
-	ReplayMarkup ReplayMarkupT `json:"replay_markup"`
+	ReplayMarkup ReplayMarkupT `json:"reply_markup"`
 }
 
 // MessageUserAnimationT Отправка сообщения с анимацией
@@ -73,7 +76,7 @@ type MessageUserAnimationT struct {
 	ChatID       int           `json:"chat_id"`
 	Animation    string        `json:"animation"`
 	Caption      string        `json:"caption"`
-	ReplayMarkup ReplayMarkupT `json:"replay_markup"`
+	ReplayMarkup ReplayMarkupT `json:"reply_markup"`
 }
 
 // ReplayMarkupT ..
