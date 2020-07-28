@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS user (
     id INTEGER PRIMARY KEY,
-    username VARCHAR(50)
+    username VARCHAR(60)
 );
 
 CREATE TABLE IF NOT EXISTS subscribe (

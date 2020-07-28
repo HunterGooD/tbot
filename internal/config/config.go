@@ -10,11 +10,12 @@ import (
 type Special struct {
 	URLAPI string `json:"urlApi"`
 	Token  string `json:"token"`
-	DbNAme string `json:"dbname"`
+	DBname string `json:"dbname"`
 }
 
-// GetURL Возвращает url для общения с API
-func (s *Special) GetURL() string {
+// NewSpecial ..
+func NewSpecial() *Special {
+	var s = &Special{}
 	b, err := ioutil.ReadFile("configs/special.json")
 	if err != nil {
 		log.Fatal(err)
@@ -23,9 +24,11 @@ func (s *Special) GetURL() string {
 	if err := json.Unmarshal(b, s); err != nil {
 		log.Fatal(err)
 	}
-	return s.concatURL()
+
+	return s
 }
 
-func (s *Special) concatURL() string {
+// URL ..
+func (s *Special) URL() string {
 	return s.URLAPI + "bot" + s.Token
 }

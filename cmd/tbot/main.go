@@ -6,29 +6,22 @@ import (
 	"time"
 
 	"github.com/huntergood/tbot/internal/bot"
-	"github.com/huntergood/tbot/internal/repository"
 
 	"github.com/huntergood/tbot/internal/config"
 )
 
-var (
-	// URL ..
-	URL string
-)
-
 func main() {
-	var s *config.Special = new(config.Special)
-	URL = s.GetURL()
-	repo := repository.NewRepo()
+	var s *config.Special = config.NewSpecial()
+	botT := bot.NewBot(s.URL(), s.DBname)
 
-	// если это выполняется программа завершается
+	// если это выполняется программа завершается КОСТЫЛЬ
 	if len(os.Args) == 2 {
 		if os.Args[1] == "-m" {
-			repo.Migration()
+			// костыль
+			botT.Migrate()
 		}
 	}
 
-	botT := bot.NewBot(URL)
 	timer := time.NewTicker(time.Minute * 10)
 	go updateContent(timer.C, botT)
 	for {

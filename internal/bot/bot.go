@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/huntergood/tbot/internal/repository"
+
 	"github.com/huntergood/tbot/pkg/parser"
 )
 
@@ -15,12 +17,16 @@ import (
 type Bot struct {
 	url        string
 	LastUpdate int
+	repo       *repository.Repo
 }
 
 // NewBot Инициализация бота
-func NewBot(url string) *Bot {
+func NewBot(url, dbname string) *Bot {
+	r := repository.NewRepo(dbname)
+	r.Connect()
 	return &Bot{
-		url: url,
+		url:  url,
+		repo: r,
 	}
 }
 
@@ -50,16 +56,48 @@ func (b *Bot) GetUpdates() ResponseT {
 	return target
 }
 
+// Migrate ...
+func (b *Bot) Migrate() {
+	b.repo.Migration()
+}
+
 // HandlerMessage обработчик сообщений
-func (b *Bot) HandlerMessage(resp ResultRT, ) {
+func (b *Bot) HandlerMessage(resp ResultRT) {
 	if resp.Message.Text == "/start" {
-		
+		u := b.repo.GetUserByID(resp.Message.From.ID)
+		if u == nil {
+			b.repo.AddUser(resp.Message.From.ID, resp.Message.From.Username)
+			b.sendMessageStart(resp.Message.From.ID, resp.Message.Text)
+			return
+		}
 	}
+	b.SendMessage(resp.Message.From.ID, resp.Message.Text)
+}
+
+func (b *Bot) sendMessageStart(id int, str string) {
+	var sUser = StartMessage{
+		ChatID: id,
+		Text:   str,
+		ReplayMT: ReplayMT{
+			ResizeKeyboard: true,
+			Keyboard:       [][]KeyboardT{{KeyboardT{Text: "Случайный пост"}}, {KeyboardT{Text: "Подписаться на тег"}}},
+		},
+	}
+
+	buf, err := json.Marshal(sUser)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err = http.Post(b.url+"/sendMessage", "application/json", bytes.NewBuffer(buf)); err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 // SendMessage //
 func (b *Bot) SendMessage(id int, str string) {
-	var mUser MessageUserT = MessageUserT{
+	var mUser = MessageUserT{
 		ChatID: id,
 		Text:   str,
 	}
@@ -76,15 +114,22 @@ func (b *Bot) SendMessage(id int, str string) {
 
 // SendMessageReactor парсит и отправляет сообщения с reactor
 func (b *Bot) SendMessageReactor(url string) {
+	var idusers []int = b.repo.GetIDUsers()
 	html := parser.GetHTML(url)
 	strs := parser.GetObject(html, `<script\stype="application/ld\+json"[^>]*>(.+?)</script>`)
 	for _, str := range strs {
-		res := JSONReact{}
+		var res = JSONReact{}
 		if err := json.Unmarshal([]byte(str), &res); err != nil {
 			log.Fatal(err)
 		}
 		f := res
-		go b.sendMedia(f, 281115651)
+		go b.sendUsers(f, idusers)
+	}
+}
+
+func (b *Bot) sendUsers(res JSONReact, users []int) {
+	for _, user := range users {
+		go b.sendMedia(res, user)
 	}
 }
 
@@ -95,12 +140,7 @@ func (b *Bot) sendMedia(res JSONReact, id int) {
 		err          error
 		replauMarkup = ReplayMarkupT{
 			[][]InlineKeyboardT{
-				{
-					InlineKeyboardT{
-						Text: "Открыть пост",
-						URL:  "http://joyreactor.cc" + res.MainEntity.ID,
-					},
-				},
+				{InlineKeyboardT{Text: "Открыть пост", URL: "http://joyreactor.cc" + res.MainEntity.ID}},
 			},
 		}
 	)

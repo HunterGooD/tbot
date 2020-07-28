@@ -45,6 +45,21 @@ type MessageUserT struct {
 	Text   string `json:"text"`
 }
 
+// StartMessage
+type StartMessage struct {
+	ChatID   int      `json:"chat_id"`
+	Text     string   `json:"text"`
+	ReplayMT ReplayMT `json:"reply_markup"`
+}
+
+type ReplayMT struct {
+	ResizeKeyboard bool          `json:"resize_keyboard"`
+	Keyboard       [][]KeyboardT `json:"keyboard"`
+}
+type KeyboardT struct {
+	Text string `json:"text"`
+}
+
 // MessageUserPhotoT Отправка сообщения с фото
 type MessageUserPhotoT struct {
 	ChatID       int           `json:"chat_id"`
