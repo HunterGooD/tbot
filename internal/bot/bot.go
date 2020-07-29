@@ -3,6 +3,7 @@ package bot
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -79,8 +80,14 @@ func (b *Bot) HandlerMessage(resp ResultRT) {
 	case "Случайный пост":
 		b.sendRandom(resp.Message.From.ID)
 		return
+	case "/help":
+		b.sendHelp(resp.Message.From.ID)
 	}
 	b.SendMessage(resp.Message.From.ID, resp.Message.Text)
+}
+
+func (b *Bot) sendHelp(id int) {
+
 }
 
 func (b *Bot) sendMessageStart(id int) {
@@ -128,25 +135,13 @@ func (b *Bot) getStrings(url, reg string) []string {
 
 func (b *Bot) sendRandom(id int) {
 	var strs []string
-	var wg = new(sync.WaitGroup)
 	for len(strs) == 0 {
-		strs = b.getStrings("http://reactor.cc/random", `<div\sclass="image".*?href\s*=\s*['"]([^\s'"]+)[\s'"]`)
+		fmt.Println("Поиск для ", id, strs)
+		strs = b.getStrings("http://reactor.cc/random", `<div\sclass="image".*?src\s*=\s*['"]([^\s'"]+)[\s'"]`)
 	}
 	for _, str := range strs {
-		var res = JSONReact{
-			Type: "Image",
-			Image: ImageReactor{
-				URL: str,
-			},
-		}
-		f := res
-		wg.Add(1)
-		go func(wgf *sync.WaitGroup) {
-			b.sendUsers(f, []int{id})
-			wgf.Done()
-		}(wg)
+		b.sendUsers(str, []int{id})
 	}
-	wg.Wait()
 }
 
 // SendMessageReactor парсит и отправляет сообщения с reactor
@@ -155,55 +150,47 @@ func (b *Bot) SendMessageReactor(url string) {
 	var wg = new(sync.WaitGroup)
 	rand.Seed(time.Now().Unix())
 	page := strconv.Itoa(rand.Intn(2500) + 1)
-	strs := b.getStrings(url+page, `<script\stype="application/ld\+json"[^>]*>(.+?)</script>`)
-	for i, str := range strs {
-		if len(str) == 0 {
-			continue
-		}
-		log.Println(url+page, strconv.Itoa(i))
-		var res = JSONReact{}
-		if err := json.Unmarshal([]byte(str), &res); err != nil {
-			log.Fatal(err)
-		}
-		f := res
+	strs := b.getStrings(url+page, `<div\sclass="image".*?src\s*=\s*['"]([^\s'"]+)[\s'"]`)
+	log.Println(len(strs))
+	for _, str := range strs {
 		wg.Add(1)
-		go func(wgf *sync.WaitGroup) {
-			b.sendUsers(f, idusers)
+		go func(wgf *sync.WaitGroup, img string) {
+			b.sendUsers(img, idusers)
 			wgf.Done()
-		}(wg)
+		}(wg, str)
 	}
 	wg.Wait()
 }
 
-func (b *Bot) sendUsers(res JSONReact, users []int) {
+func (b *Bot) sendUsers(img string, users []int) {
 	var wg = new(sync.WaitGroup)
 	for _, user := range users {
 		wg.Add(1)
 		go func(wgf *sync.WaitGroup, user int) {
-			b.sendMedia(res, user)
+			b.sendMedia(img, user)
 			wgf.Done()
 		}(wg, user)
 	}
 	wg.Wait()
 }
 
-func (b *Bot) sendMedia(res JSONReact, id int) {
+func (b *Bot) sendMedia(img string, id int) {
 	var (
 		postURL      = "/sendPhoto"
 		buff         []byte
 		err          error
 		replauMarkup = ReplayMarkupT{
 			[][]InlineKeyboardT{
-				{InlineKeyboardT{Text: "Открыть пост", URL: "http://joyreactor.cc" + res.MainEntity.ID}},
+				{InlineKeyboardT{Text: "Открыть картинку", URL: img}},
 			},
 		}
 	)
-	if !b.checkPhoto(res.Image.URL) {
+	if !b.checkPhoto(img) {
 		postURL = "/sendAnimation"
 		ams := &MessageUserAnimationT{
 			ChatID:       id,
-			Animation:    res.Image.URL,
-			Caption:      getCaption(res.HeadLine),
+			Animation:    img,
+			Caption:      "",
 			ReplayMarkup: replauMarkup,
 		}
 		buff, err = json.Marshal(ams)
@@ -214,8 +201,8 @@ func (b *Bot) sendMedia(res JSONReact, id int) {
 	if len(buff) == 0 {
 		ams := &MessageUserPhotoT{
 			ChatID:       id,
-			Photo:        res.Image.URL,
-			Caption:      getCaption(res.HeadLine),
+			Photo:        img,
+			Caption:      "",
 			ReplayMarkup: replauMarkup,
 		}
 		buff, err = json.Marshal(ams)

@@ -22,7 +22,7 @@ func main() {
 		}
 	}
 
-	timer := time.NewTicker(time.Second * 30)
+	timer := time.NewTicker(time.Minute * 10)
 	go updateContent(timer.C, botT)
 	for {
 		res := botT.GetUpdates()
@@ -43,3 +43,13 @@ func updateContent(c <-chan time.Time, botT *bot.Bot) {
 		botT.SendMessageReactor("http://anime.reactor.cc/")
 	}
 }
+
+/*
+Parse Img
+2020/07/29 10:49:20 http://reactor.cc/1551 0
+2020/07/29 10:49:22 http://anime.reactor.cc/1775 0
+2020/07/29 10:49:22 http://anime.reactor.cc/1775 1
+2020/07/29 10:49:22 http://anime.reactor.cc/1775 2
+2020/07/29 10:49:22 http://anime.reactor.cc/1775 3
+Должно быть от 0 до 9
+*/
