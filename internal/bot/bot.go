@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/huntergood/tbot/internal/repository"
@@ -70,9 +71,11 @@ func (b *Bot) HandlerMessage(resp ResultRT) {
 		u := b.repo.GetUserByID(resp.Message.From.ID)
 		if u == nil {
 			b.repo.AddUser(resp.Message.From.ID, resp.Message.From.Username)
-			b.sendMessageStart(resp.Message.From.ID, resp.Message.Text)
+			b.sendMessageStart(resp.Message.From.ID)
 			return
 		}
+	case "/random":
+		fallthrough
 	case "Случайный пост":
 		b.sendRandom(resp.Message.From.ID)
 		return
@@ -80,10 +83,10 @@ func (b *Bot) HandlerMessage(resp ResultRT) {
 	b.SendMessage(resp.Message.From.ID, resp.Message.Text)
 }
 
-func (b *Bot) sendMessageStart(id int, str string) {
+func (b *Bot) sendMessageStart(id int) {
 	var sUser = StartMessage{
 		ChatID: id,
-		Text:   str,
+		Text:   "Приветствую",
 		ReplayMT: ReplayMT{
 			ResizeKeyboard: true,
 			Keyboard:       [][]KeyboardT{{KeyboardT{Text: "Случайный пост"}}, {KeyboardT{Text: "Подписаться на тег"}}},
@@ -125,6 +128,7 @@ func (b *Bot) getStrings(url, reg string) []string {
 
 func (b *Bot) sendRandom(id int) {
 	var strs []string
+	var wg = new(sync.WaitGroup)
 	for len(strs) == 0 {
 		strs = b.getStrings("http://reactor.cc/random", `<div\sclass="image".*?href\s*=\s*['"]([^\s'"]+)[\s'"]`)
 	}
@@ -136,33 +140,51 @@ func (b *Bot) sendRandom(id int) {
 			},
 		}
 		f := res
-		go b.sendUsers(f, []int{id})
+		wg.Add(1)
+		go func(wgf *sync.WaitGroup) {
+			b.sendUsers(f, []int{id})
+			wgf.Done()
+		}(wg)
 	}
+	wg.Wait()
 }
 
 // SendMessageReactor парсит и отправляет сообщения с reactor
 func (b *Bot) SendMessageReactor(url string) {
 	var idusers []int = b.repo.GetIDUsers()
+	var wg = new(sync.WaitGroup)
 	rand.Seed(time.Now().Unix())
-	page := strconv.Itoa(rand.Intn(3000) + 1)
+	page := strconv.Itoa(rand.Intn(2500) + 1)
 	strs := b.getStrings(url+page, `<script\stype="application/ld\+json"[^>]*>(.+?)</script>`)
-	for _, str := range strs {
+	for i, str := range strs {
 		if len(str) == 0 {
 			continue
 		}
+		log.Println(url+page, strconv.Itoa(i))
 		var res = JSONReact{}
 		if err := json.Unmarshal([]byte(str), &res); err != nil {
 			log.Fatal(err)
 		}
 		f := res
-		go b.sendUsers(f, idusers)
+		wg.Add(1)
+		go func(wgf *sync.WaitGroup) {
+			b.sendUsers(f, idusers)
+			wgf.Done()
+		}(wg)
 	}
+	wg.Wait()
 }
 
 func (b *Bot) sendUsers(res JSONReact, users []int) {
+	var wg = new(sync.WaitGroup)
 	for _, user := range users {
-		go b.sendMedia(res, user)
+		wg.Add(1)
+		go func(wgf *sync.WaitGroup, user int) {
+			b.sendMedia(res, user)
+			wgf.Done()
+		}(wg, user)
 	}
+	wg.Wait()
 }
 
 func (b *Bot) sendMedia(res JSONReact, id int) {

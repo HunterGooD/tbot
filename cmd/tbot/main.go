@@ -22,7 +22,7 @@ func main() {
 		}
 	}
 
-	timer := time.NewTicker(time.Minute * 10)
+	timer := time.NewTicker(time.Second * 30)
 	go updateContent(timer.C, botT)
 	for {
 		res := botT.GetUpdates()
@@ -39,7 +39,7 @@ func updateContent(c <-chan time.Time, botT *bot.Bot) {
 	for range c {
 		//parse img
 		fmt.Println("Parse Img")
-		go botT.SendMessageReactor("http://reactor.cc/")
+		botT.SendMessageReactor("http://reactor.cc/")
 		botT.SendMessageReactor("http://anime.reactor.cc/")
 	}
 }
